@@ -34,7 +34,8 @@ $TargetAvSet=Get-AzAvailabilitySet -ResourceGroupName "asrvault" -name "ASRDEMO-
 
 
 #Vm List
-$vms=Get-azVm -ResourceGroupName $ResourceGRoup.ResourceGroupName
+
+$vms=Get-azVm -ResourceGroupName $ResourceGRoup.ResourceGroupName
 $VMCount=$vms.Count
 $ProtectVMCount=0
  
@@ -47,7 +48,9 @@ $ExcludeVM="asrppg-s2d-1","asrppg-s2d-2","asrppgtest01"
 
 Foreach ($vm in $VMs) {
 
-If ($vm.name -notin $ExcludeVM)
+
+If ($vm.name -notin $ExcludeVM)
+
 { 
 Write-Host "Protecting VM" $vm.Name
 
@@ -68,12 +71,13 @@ $RecoveryReplicaDiskAccountType = $osdisk.sku.name
 $OSDiskReplicationConfig = New-AzRecoveryServicesAsrAzureToAzureDiskReplicationConfig -ManagedDisk -LogStorageAccountId $CacheStorageAccount.id -DiskId $OSdiskId -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryReplicaDiskAccountType $RecoveryReplicaDiskAccountType -RecoveryTargetDiskAccountType $RecoveryOSDiskAccountType
  
 #DataDisk
- Write-host "Located" $vm.StorageProfile.DataDisks.Count "Data Disks on" $Vm.Name
+
+Write-host "Located" $vm.StorageProfile.DataDisks.Count "Data Disks on" $Vm.Name
  
 $datadiskconfigs = @()
  
 foreach($datadisk in $vm.StorageProfile.DataDisks)
- {
+{
  
     $datadiskId = $datadisk.ManagedDisk.Id
     Write-host $datadiskId "Located as data disk for" $Vm.Name
@@ -84,16 +88,17 @@ foreach($datadisk in $vm.StorageProfile.DataDisks)
   
     $datadiskconfig = New-AzRecoveryServicesAsrAzureToAzureDiskReplicationConfig -ManagedDisk -LogStorageAccountId $CacheStorageAccount.Id -DiskId $datadiskId -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryReplicaDiskAccountType $RecoveryReplicaDiskAccountType -RecoveryTargetDiskAccountType $RecoveryTargetDiskAccountType
  
-    $datadisksconfigs = $datadiskconfigs + $datadiskconfig
-
-     }
+    $datadisksconfigs += $datadiskconfig
+}
 
 
 $ProtectVMCount=$ProtectVMCount+1
 
 $diskconfigs = @()
 $diskconfigs += $OSDiskReplicationConfig
-$diskconfigs += $datadiskconfigs
+foreach($config in $datadiskconfigs){
+     $diskconfigs += $config
+}
 
 $TempASRJob = New-AzRecoveryServicesAsrReplicationProtectedItem -AzureToAzure -AzureVmId $VM.Id -Name (New-Guid).Guid -ProtectionContainerMapping $Source2TargetMapping -AzureToAzureDiskReplicationConfiguration $diskconfigs -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryProximityPlacementGroupId $TargetPPG.Id -RecoveryAvailabilitySetId $targetavset
 
