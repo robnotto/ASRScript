@@ -40,7 +40,7 @@ $ProtectVMCount=0
  
 #Exclude VMs by name
 
-$ExcludeVM="vmname0","vmname1","vmname2"
+$ExcludeVM="asrppg-s2d-1","asrppg-s2d-2","asrppgtest01"
 
 #Check for Excluded VMs.  
      
@@ -97,11 +97,20 @@ $diskconfigs += $datadiskconfigs
 
 $TempASRJob = New-AzRecoveryServicesAsrReplicationProtectedItem -AzureToAzure -AzureVmId $VM.Id -Name (New-Guid).Guid -ProtectionContainerMapping $Source2TargetMapping -AzureToAzureDiskReplicationConfiguration $diskconfigs -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryProximityPlacementGroupId $TargetPPG.Id -RecoveryAvailabilitySetId $targetavset
 
+#Track Job status to check for completion
+while (($TempASRJob.State -eq "InProgress") -or ($TempASRJob.State -eq "NotStarted")){
+        sleep 10;
+        $TempASRJob = Get-AzRecoveryServicesAsrJob -Job $TempASRJob
+
+#Check if the Job completed successfully. The updated job state of a successfully completed job should be "Succeeded"
+Write-Output $TempASRJob.State "On VM:"  $VM.Name
+}
+
 
  
 }
 
-Write-Host "Total NUmber of VM Protected" $ProtectVMCount
+
 
 }
 
