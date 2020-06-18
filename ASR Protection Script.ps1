@@ -41,7 +41,7 @@ $ProtectVMCount=0
  
 #Exclude VMs by name
 
-$ExcludeVM="asrppg-s2d-1","asrppg-s2d-2","asrppgtest01"
+$ExcludeVM="vmname1","vmname2","vmname3"
 
 #Check for Excluded VMs.  
      
@@ -73,7 +73,7 @@ $OSDiskReplicationConfig = New-AzRecoveryServicesAsrAzureToAzureDiskReplicationC
 #DataDisk
 
 Write-host "Located" $vm.StorageProfile.DataDisks.Count "Data Disks on" $Vm.Name
- 
+
 $datadiskconfigs = @()
  
 foreach($datadisk in $vm.StorageProfile.DataDisks)
@@ -88,7 +88,7 @@ foreach($datadisk in $vm.StorageProfile.DataDisks)
   
     $datadiskconfig = New-AzRecoveryServicesAsrAzureToAzureDiskReplicationConfig -ManagedDisk -LogStorageAccountId $CacheStorageAccount.Id -DiskId $datadiskId -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryReplicaDiskAccountType $RecoveryReplicaDiskAccountType -RecoveryTargetDiskAccountType $RecoveryTargetDiskAccountType
  
-    $datadisksconfigs += $datadiskconfig
+    $datadiskconfigs += $datadiskconfig
 }
 
 
@@ -100,7 +100,7 @@ foreach($config in $datadiskconfigs){
      $diskconfigs += $config
 }
 
-$TempASRJob = New-AzRecoveryServicesAsrReplicationProtectedItem -AzureToAzure -AzureVmId $VM.Id -Name (New-Guid).Guid -ProtectionContainerMapping $Source2TargetMapping -AzureToAzureDiskReplicationConfiguration $diskconfigs -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryProximityPlacementGroupId $TargetPPG.Id -RecoveryAvailabilitySetId $targetavset
+$TempASRJob = New-AzRecoveryServicesAsrReplicationProtectedItem -AzureToAzure -AzureVmId $VM.Id -Name (New-Guid).Guid -ProtectionContainerMapping $Source2TargetMapping -AzureToAzureDiskReplicationConfiguration $diskconfigs -RecoveryResourceGroupId $TargetRecoveryRG.ResourceId -RecoveryProximityPlacementGroupId $TargetPPG.Id
 
 #Track Job status to check for completion
 while (($TempASRJob.State -eq "InProgress") -or ($TempASRJob.State -eq "NotStarted")){
@@ -109,17 +109,10 @@ while (($TempASRJob.State -eq "InProgress") -or ($TempASRJob.State -eq "NotStart
 
 #Check if the Job completed successfully. The updated job state of a successfully completed job should be "Succeeded"
 Write-Output $TempASRJob.State "On VM:"  $VM.Name
-}
-
-
- 
-}
-
-
-
+        }
+    }
 }
 
 
 
  
-
